@@ -1,2 +1,0 @@
-dataset_pois.csv filter=lfs diff=lfs merge=lfs -text
-dataset_reccur.csv filter=lfs diff=lfs merge=lfs -text
