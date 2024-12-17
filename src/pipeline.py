@@ -12,13 +12,13 @@ from report_builder import write_txt, write_matrix, clean_txt
 def start():
     main_path = os.getcwd().replace(os.sep, '/')
 
-    file_name = '1000_289724'
+    file_name = '100'
     
     test_for_mmmp = test = pd.read_csv(main_path + "/" + file_name + '.csv', sep=';', header=None)
     test_intervals = get_intevals_from_df(test)
     lmbd_emp = 2999 / np.sum(test_intervals, axis=1)
 
-    df_result = df_result_mmpp = get_cdf_from_intervals(test_intervals)
+    df_result = get_cdf_from_intervals(test_intervals)
     hist_plot_test(test.iloc[0].tolist(), file_name, 100)
     
     #----------------------------------------------------------------------------------------------------------------------------------
@@ -78,9 +78,10 @@ def start():
     out_dict_mmpp['  '] = ' '
     out_dict_mmpp['Интенсивность эмпирическая:'] = "{:.3f}".format(lmbd_emp[0])
     out_dict_mmpp['Интенсивность теоретическая:'] = "{:.3f}".format(lmbd_theor)
-    out_dict_mmpp = mmpp_test_param(df_mmpp['cdf_emp'], df_result_mmpp['cdf_emp'], out_dict_mmpp)
+    x, cdf1, cdf2 = ecdf_with_all_x(df_mmpp['emperical'], df_result['emperical'])
+    out_dict_mmpp = mmpp_test_param(df_mmpp['emperical'], df_result['emperical'], out_dict_mmpp)
     out_dict_mmpp['------------------------------------------------------------------------------'] = ' '
-    kolmogorov_plot(df_result_mmpp, df_mmpp['cdf_emp'], file_name, "mmpp_2", x_lim_min=0, xticks_flag=False)
+    kolmogorov_plot_mmpp(x, cdf1, cdf2, file_name, "mmpp_2", x_lim_min=0, xticks_flag=False)
     write_txt(file_name, 'mmpp', out_dict_mmpp)
     
     out_dict_mmpp = {}
@@ -111,9 +112,10 @@ def start():
     out_dict_mmpp['  '] = ' '
     out_dict_mmpp['Интенсивность эмпирическая:'] = "{:.3f}".format(lmbd_emp[0])
     out_dict_mmpp['Интенсивность теоретическая:'] = "{:.3f}".format(lmbd_theor)
-    out_dict_mmpp = mmpp_test_param(df_mmpp['cdf_emp'], df_result_mmpp['cdf_emp'], out_dict_mmpp)
+    x, cdf1, cdf2 = ecdf_with_all_x(df_mmpp['emperical'], df_result['emperical'])
+    out_dict_mmpp = mmpp_test_param(df_mmpp['emperical'], df_result['emperical'], out_dict_mmpp)
     out_dict_mmpp['------------------------------------------------------------------------------'] = ' '
-    kolmogorov_plot(df_result_mmpp, df_mmpp['cdf_emp'], file_name, "mmpp_3", x_lim_min=0, xticks_flag=False)
+    kolmogorov_plot_mmpp(x, cdf1, cdf2, file_name, "mmpp_3", x_lim_min=0, xticks_flag=False)
     write_txt(file_name, 'mmpp', out_dict_mmpp)
     
     out_dict_mmpp = {}
@@ -144,8 +146,9 @@ def start():
     out_dict_mmpp['  '] = ' '
     out_dict_mmpp['Интенсивность эмпирическая:'] = "{:.3f}".format(lmbd_emp[0])
     out_dict_mmpp['Интенсивность теоретическая:'] = "{:.3f}".format(lmbd_theor)
-    out_dict_mmpp = mmpp_test_param(df_mmpp['cdf_emp'], df_result_mmpp['cdf_emp'], out_dict_mmpp)
-    kolmogorov_plot(df_result_mmpp, df_mmpp['cdf_emp'], file_name, "mmpp_4", x_lim_min=0, xticks_flag=False)
+    x, cdf1, cdf2 = ecdf_with_all_x(df_mmpp['emperical'], df_result['emperical'])
+    out_dict_mmpp = mmpp_test_param(df_mmpp['emperical'], df_result['emperical'], out_dict_mmpp)
+    kolmogorov_plot_mmpp(x, cdf1, cdf2, file_name, "mmpp_4", x_lim_min=0, xticks_flag=False)
     write_txt(file_name, 'mmpp', out_dict_mmpp)
 
     #----------------------------------------------------------------------------------------------------------------------------------
@@ -161,8 +164,6 @@ def start():
     out_dict_recurr['   '] = ' '
     alpha = recurr_gamma_alpha_model.predict(test_intervals)[0]
     beta = recurr_gamma_beta_model.predict(test_intervals)[0]
-    alpha = 5.245
-    beta = 46.626
     if alpha > 0 and beta > 0:
         out_dict_recurr['Параметр формы:'] = "{:.3f}".format(alpha)
         out_dict_recurr['Параметр масштаба:'] = "{:.3f}".format(beta)

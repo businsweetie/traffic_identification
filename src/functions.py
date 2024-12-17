@@ -28,6 +28,13 @@ def get_cdf_from_intervals(df_intervals):
 
     return df_result
 
+def ecdf_with_all_x(data1, data2):
+  all_data = np.concatenate((data1, data2))
+  all_x = np.sort(np.unique(all_data))
+  y1 = np.array([np.mean(data1 <= x) for x in all_x])
+  y2 = np.array([np.mean(data2 <= x) for x in all_x])
+  return all_x, y1, y2
+
 def distribution_function_exp(x, lmbd):
     return expon.cdf(x, scale = 1 / lmbd)
 
@@ -194,6 +201,10 @@ def kolmogorov_plot(df, theor_cdf, file_name, process_type, x_lim_min=0, xticks_
     plt.ylim(-0.01, 1.008)
     plt.xlabel('Интервалы между моментами времени \nнаступления событий', fontsize=10)
     plt.ylabel('Вероятность', fontsize=10)
+    plt.xticks([tick for tick in plt.xticks()[0]], [
+           str(tick).replace('.', ',') for tick in plt.xticks()[0]])
+    plt.yticks([tick for tick in plt.yticks()[0]], [
+           str(tick).replace('.', ',') for tick in plt.yticks()[0]])
     if os.path.exists(main_path + '/pic/cdf/color/'+file_name) is not True:
         os.mkdir(main_path + '/pic/cdf/color/'+file_name)
     fig.savefig(main_path + '/pic/cdf/color/'+file_name+'/'+process_type+'.pdf', bbox_inches="tight");
@@ -216,23 +227,100 @@ def kolmogorov_plot(df, theor_cdf, file_name, process_type, x_lim_min=0, xticks_
     plt.ylim(-0.01, 1.008)
     plt.xlabel('Интервалы между моментами времени \nнаступления событий', fontsize=10)
     plt.ylabel('Вероятность', fontsize=10)
+    plt.xticks([tick for tick in plt.xticks()[0]], [
+           str(tick).replace('.', ',') for tick in plt.xticks()[0]])
+    plt.yticks([tick for tick in plt.yticks()[0]], [
+           str(tick).replace('.', ',') for tick in plt.yticks()[0]])
+    if os.path.exists(main_path + '/pic/cdf/grey/'+file_name) is not True:
+        os.mkdir(main_path + '/pic/cdf/grey/'+file_name)
+    fig.savefig(main_path + '/pic/cdf/grey/'+file_name+'/'+process_type+'.pdf', bbox_inches="tight");
+
+def kolmogorov_plot_mmpp(x, cdf1, cdf2, file_name, process_type, x_lim_min=0, xticks_flag=None, xticks_arr=None, xticks_arr_change=None):
+    main_path = os.getcwd().replace(os.sep, '/')
+
+    k = np.argmax(np.abs(cdf1 - cdf2))
+    ks_stat = np.abs(cdf1[k] - cdf2[k])
+    y = (cdf1[k] + cdf2[k]) / 2
+    
+    fig = plt.figure(figsize=(5, 3))
+    plt.plot(x, cdf1, label='Эмпирическая ФРВ')
+    plt.plot(x, cdf2, label='Теоретическая ФРВ', linestyle=(0, (5, 5)))
+    plt.errorbar(x=x[k], y=y, yerr=ks_stat/2, color='k',
+        capsize=4, mew=2, label=r"$\Delta$ =" + f"{ks_stat:.3f}")
+    if xticks_flag != None:
+        plt.xticks(xticks_arr, xticks_arr_change)
+    #plt.xticks([0.0, 50000, 100000, 150000, 200000], ['0', r'$1*10^{-3}$', r'$1,75*10^{-3}$'])
+    #plt.xticks([0.0, 50000, 100000, 150000, 200000], [0, 50000, 100000, 150000, 200000])
+    #plt.xticks([0.0, 0.001, 0.00175], [0.0, 0.001, 0.00175])
+    #plt.xticks([0.0, 0.0002, 0.0004, 0.0006, 0.0008], [0.0, 0.0002, 0.0004, 0.0006, 0.0008])
+    #plt.xticks([0.0, 0.0005, 0.001, 0.0015, 0.002], [0.0, 0.0005, 0.001, 0.0015, 0.002])
+    plt.legend(loc=4);
+    plt.grid(alpha=0.4, color='k')
+    plt.xlim(x_lim_min, max(x))
+    plt.ylim(-0.01, 1.008)
+    plt.xlabel('Интервалы между моментами времени \nнаступления событий', fontsize=10)
+    plt.ylabel('Вероятность', fontsize=10)
+    plt.xticks([tick for tick in plt.xticks()[0]], [
+           str(tick).replace('.', ',') for tick in plt.xticks()[0]])
+    plt.yticks([tick for tick in plt.yticks()[0]], [
+           str(tick).replace('.', ',') for tick in plt.yticks()[0]])
+    if os.path.exists(main_path + '/pic/cdf/color/'+file_name) is not True:
+        os.mkdir(main_path + '/pic/cdf/color/'+file_name)
+    fig.savefig(main_path + '/pic/cdf/color/'+file_name+'/'+process_type+'.pdf', bbox_inches="tight");
+    
+    fig = plt.figure(figsize=(5, 3))
+    plt.plot(x, cdf1, label='Эмпирическая ФРВ', color='grey')
+    plt.plot(x, cdf2, label='Теоретическая ФРВ', color='k', linestyle=(0, (5, 5)))
+    plt.errorbar(x=x[k], y=y, yerr=ks_stat/2, color='k',
+        capsize=4, mew=2, label=r"$\Delta$ =" + f"{ks_stat:.3f}")
+    if xticks_flag != None:
+        plt.xticks(xticks_arr, xticks_arr_change)
+    #plt.xticks([0.0, 50000, 100000, 150000, 200000], ['0', r'$1*10^{-3}$', r'$1,75*10^{-3}$'])
+    #plt.xticks([0.0, 50000, 100000, 150000, 200000], [0, 50000, 100000, 150000, 200000])
+    #plt.xticks([0.0, 0.001, 0.00175], [0.0, 0.001, 0.00175])
+    #plt.xticks([0.0, 0.0002, 0.0004, 0.0006, 0.0008], [0.0, 0.0002, 0.0004, 0.0006, 0.0008])
+    #plt.xticks([0.0, 0.0005, 0.001, 0.0015, 0.002], [0.0, 0.0005, 0.001, 0.0015, 0.002])
+    plt.legend(loc=4);
+    plt.grid(alpha=0.4, color='k')
+    plt.xlim(x_lim_min, max(x))
+    plt.ylim(-0.01, 1.008)
+    plt.xlabel('Интервалы между моментами времени \nнаступления событий', fontsize=10)
+    plt.ylabel('Вероятность', fontsize=10)
+    plt.xticks([tick for tick in plt.xticks()[0]], [
+           str(tick).replace('.', ',') for tick in plt.xticks()[0]])
+    plt.yticks([tick for tick in plt.yticks()[0]], [
+           str(tick).replace('.', ',') for tick in plt.yticks()[0]])
     if os.path.exists(main_path + '/pic/cdf/grey/'+file_name) is not True:
         os.mkdir(main_path + '/pic/cdf/grey/'+file_name)
     fig.savefig(main_path + '/pic/cdf/grey/'+file_name+'/'+process_type+'.pdf', bbox_inches="tight");
 
 def hist_plot_test(data, file_name, bins_size=100, figsize=(10,3)):
-    fig = plt.figure(figsize=figsize)
-    plt.hist(data, bins=bins_size, edgecolor='black')
-    plt.grid(alpha=0.1, color='k')
-    plt.xlim(min(data), max(data))
-    plt.xlabel('Время', fontsize=10)
-    plt.ylabel('Вероятность', fontsize=10)
-    fig.savefig('pic/hist/color/' + file_name + "_bins_size_" + str(bins_size) + '.pdf', bbox_inches="tight");
+    main_path = os.getcwd().replace(os.sep, '/')
 
     fig = plt.figure(figsize=figsize)
-    plt.hist(data, bins=bins_size, color="grey", edgecolor='black')
+    plt.hist(data, bins=bins_size, edgecolor='black', density=True)
     plt.grid(alpha=0.1, color='k')
     plt.xlim(min(data), max(data))
     plt.xlabel('Время', fontsize=10)
     plt.ylabel('Вероятность', fontsize=10)
-    fig.savefig('pic/hist/grey/'+ file_name + "_bins_size_" + str(bins_size) + '.pdf', bbox_inches="tight");
+    plt.xticks([tick for tick in plt.xticks()[0]], [
+           str(tick).replace('.', ',') for tick in plt.xticks()[0]])
+    plt.yticks([tick for tick in plt.yticks()[0]], [
+           str(tick).replace('.', ',') for tick in plt.yticks()[0]])
+    if os.path.exists(main_path + '/pic/hist/color/'+file_name) is not True:
+        os.mkdir(main_path + '/pic/hist/color/'+file_name)
+    fig.savefig(main_path + '/pic/hist/color/'+file_name+'/'+ "_bins_size_" + str(bins_size)+'.pdf', bbox_inches="tight");
+
+    fig = plt.figure(figsize=figsize)
+    plt.hist(data, bins=bins_size, color="grey", edgecolor='black', density=True)
+    plt.grid(alpha=0.1, color='k')
+    plt.xlim(min(data), max(data))
+    plt.xlabel('Время', fontsize=10)
+    plt.ylabel('Вероятность', fontsize=10)
+    plt.xticks([tick for tick in plt.xticks()[0]], [
+           str(tick).replace('.', ',') for tick in plt.xticks()[0]])
+    plt.yticks([tick for tick in plt.yticks()[0]], [
+           str(tick).replace('.', ',') for tick in plt.yticks()[0]])
+    if os.path.exists(main_path + '/pic/hist/grey/'+file_name) is not True:
+        os.mkdir(main_path + '/pic/hist/grey/'+file_name)
+    fig.savefig(main_path + '/pic/hist/grey/'+file_name+'/'+ "_bins_size_" + str(bins_size)+'.pdf', bbox_inches="tight");
