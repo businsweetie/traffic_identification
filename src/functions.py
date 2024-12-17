@@ -169,6 +169,8 @@ def mmpp_test_param(X_pred, test_values, dict_out):
     return dict_out
 
 def kolmogorov_plot(df, theor_cdf, file_name, process_type, x_lim_min=0, xticks_flag=None, xticks_arr=None, xticks_arr_change=None):
+    main_path = os.getcwd().replace(os.sep, '/')
+
     df['cdf_theor'] = theor_cdf
     k = np.argmax(np.abs(df['cdf_emp'] - df['cdf_theor']))
     ks_stat = np.abs(df['cdf_emp'][k] - df['cdf_theor'][k])
@@ -192,9 +194,9 @@ def kolmogorov_plot(df, theor_cdf, file_name, process_type, x_lim_min=0, xticks_
     plt.ylim(-0.01, 1.008)
     plt.xlabel('Интервалы между моментами времени \nнаступления событий', fontsize=10)
     plt.ylabel('Вероятность', fontsize=10)
-    if os.path.exists('C:/Users/Dashulya/YandexDisk/Dasha_dis/pic/cdf/color/'+file_name) is not True:
-        os.mkdir('C:/Users/Dashulya/YandexDisk/Dasha_dis/pic/cdf/color/'+file_name)
-    fig.savefig('C:/Users/Dashulya/YandexDisk/Dasha_dis/pic/cdf/color/'+file_name+'/'+process_type+'.pdf', bbox_inches="tight");
+    if os.path.exists(main_path + '/pic/cdf/color/'+file_name) is not True:
+        os.mkdir(main_path + '/pic/cdf/color/'+file_name)
+    fig.savefig(main_path + '/pic/cdf/color/'+file_name+'/'+process_type+'.pdf', bbox_inches="tight");
     
     fig = plt.figure(figsize=(5, 3))
     plt.plot('emperical', 'cdf_emp', data=df, label='Эмпирическая ФРВ', color='grey')
@@ -214,9 +216,9 @@ def kolmogorov_plot(df, theor_cdf, file_name, process_type, x_lim_min=0, xticks_
     plt.ylim(-0.01, 1.008)
     plt.xlabel('Интервалы между моментами времени \nнаступления событий', fontsize=10)
     plt.ylabel('Вероятность', fontsize=10)
-    if os.path.exists('C:/Users/Dashulya/YandexDisk/Dasha_dis/pic/cdf/grey/'+file_name) is not True:
-        os.mkdir('C:/Users/Dashulya/YandexDisk/Dasha_dis/pic/cdf/grey/'+file_name)
-    fig.savefig('C:/Users/Dashulya/YandexDisk/Dasha_dis/pic/cdf/grey/'+file_name+'/'+process_type+'.pdf', bbox_inches="tight");
+    if os.path.exists(main_path + '/pic/cdf/grey/'+file_name) is not True:
+        os.mkdir(main_path + '/pic/cdf/grey/'+file_name)
+    fig.savefig(main_path + '/pic/cdf/grey/'+file_name+'/'+process_type+'.pdf', bbox_inches="tight");
 
 def hist_plot_test(data, file_name, bins_size=100, figsize=(10,3)):
     fig = plt.figure(figsize=figsize)

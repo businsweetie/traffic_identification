@@ -10,9 +10,11 @@ from report_builder import write_txt, write_matrix, clean_txt
 
     
 def start():
-    file_name = '1000_289724'
+    main_path = os.getcwd().replace(os.sep, '/')
 
-    test_for_mmmp = test = pd.read_csv('C:/Users/Dashulya/YandexDisk/Dasha_dis/' + file_name + '.csv', sep=';', header=None)
+    file_name = '1000_289724'
+    
+    test_for_mmmp = test = pd.read_csv(main_path + "/" + file_name + '.csv', sep=';', header=None)
     test_intervals = get_intevals_from_df(test)
     lmbd_emp = 2999 / np.sum(test_intervals, axis=1)
 
