@@ -3,37 +3,47 @@ import random
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
 from scipy.special import gammaincc
 from scipy.stats import expon, lognorm, uniform, weibull_min, ttest_ind, mannwhitneyu, kstest
 
-def get_intevals_from_df(df):
-    df_intervals = []
-    for i in range(1, df.shape[1]):
-        df_intervals.append(df[i] - df[i-1])
-    return pd.DataFrame(np.array(df_intervals).T.tolist())
+
+def get_intervals_from_df(df):
+    """
+    Вычисляет интервалы между соседними столбцами DataFrame.
+    """
+    intervals = df.diff(axis=1).iloc[:, 1:]
+    intervals.columns = range(intervals.shape[1])
+    return intervals
+    
 
 def get_cdf_from_intervals(df_intervals):
-    emperical_intervals = df_intervals.iloc[0].tolist()
-    emperical_intervals = sorted(emperical_intervals)
+    """
+    Создает DataFrame с эмпирическими интервалами, их частотами и эмпирической функцией распределения (CDF).
+    """
+    emperical_intervals = np.sort(df_intervals.iloc[0].values) 
+    unique_vals, counts = np.unique(emperical_intervals, return_counts=True) 
 
-    df_result = pd.DataFrame()
-    df_result['emperical'] = pd.Series(emperical_intervals).unique()
-    df_result['value_counts'] = pd.Series(emperical_intervals).value_counts(sort=False).to_list()
-    df_result['prob'] = df_result['value_counts'] / 2999
-    distrib = [0., df_result['prob'].loc[0]]
+    total_intervals = np.sum(counts)
 
-    for i in range(2, len(df_result)):
-        distrib.append(df_result['prob'].loc[i] + distrib[i-1])
-    df_result['cdf_emp'] = distrib
+    df_result = pd.DataFrame({
+        'emperical': unique_vals,
+        'value_counts': counts,
+        'prob': counts / total_intervals 
+    })
+
+    df_result['cdf_emp'] = np.cumsum(df_result['prob'])
 
     return df_result
 
+
 def ecdf_with_all_x(data1, data2):
-  all_data = np.concatenate((data1, data2))
-  all_x = np.sort(np.unique(all_data))
-  y1 = np.array([np.mean(data1 <= x) for x in all_x])
-  y2 = np.array([np.mean(data2 <= x) for x in all_x])
-  return all_x, y1, y2
+    all_data = np.concatenate((data1, data2))
+    all_x = np.sort(np.unique(all_data))
+    y1 = np.array([np.mean(data1 <= x) for x in all_x])
+    y2 = np.array([np.mean(data2 <= x) for x in all_x])
+    y = np.vstack((y1, y2))
+    return all_x, y
 
 def distribution_function_exp(x, lmbd):
     return expon.cdf(x, scale = 1 / lmbd)
@@ -54,6 +64,33 @@ def distribution_function_uniform(x, a, b):
 def distribution_function_weibull(x, theta, k):
     return weibull_min.cdf(x, k, loc=0, scale=theta)
 
+# def distribution_function(x, dist_type, *params):
+#     if dist_type == 'exp':
+#         lmbd = params[0]
+#         return expon.cdf(x, scale=1 / lmbd)
+    
+#     elif dist_type == 'gamma':
+#         alpha, beta = params
+#         return gammaincc(alpha, x / beta)
+    
+#     elif dist_type == 'hexp':
+#         p, lmbd1, lmbd2 = params
+#         return p * expon.cdf(x, scale=1 / lmbd1) + (1 - p) * expon.cdf(x, scale=1 / lmbd2)
+    
+#     elif dist_type == 'lognorm':
+#         mu, sigma = params
+#         return lognorm.cdf(x, sigma, scale=np.exp(mu))
+    
+#     elif dist_type == 'uniform':
+#         a, b = params
+#         return uniform.cdf(x, a, b - a)
+    
+#     elif dist_type == 'weibull':
+#         theta, k = params
+#         return weibull_min.cdf(x, k, loc=0, scale=theta)
+#     else:
+#         raise ValueError(f"Неизвестный тип распределения: {dist_type}")
+    
 def kolmogorov(emp_function, distribution_function):
     abs_list = abs(emp_function - distribution_function)
     return abs_list.max()
@@ -175,152 +212,80 @@ def mmpp_test_param(X_pred, test_values, dict_out):
         
     return dict_out
 
-def kolmogorov_plot(df, theor_cdf, file_name, process_type, x_lim_min=0, xticks_flag=None, xticks_arr=None, xticks_arr_change=None):
+
+def kolmogorov_plot(data_source, theor_cdf, file_name, process_type, x_lim_min=0,
+                             xticks_flag=False, xticks_arr=None, xticks_arr_change=None,
+                             mmpp_mode=False):
     main_path = os.getcwd().replace(os.sep, '/')
+    colors = ['color', 'grey']
 
-    df['cdf_theor'] = theor_cdf
-    k = np.argmax(np.abs(df['cdf_emp'] - df['cdf_theor']))
-    ks_stat = np.abs(df['cdf_emp'][k] - df['cdf_theor'][k])
-    y = (df['cdf_emp'][k] + df['cdf_theor'][k]) / 2
-    
-    fig = plt.figure(figsize=(5, 3))
-    plt.plot('emperical', 'cdf_emp', data=df, label='Эмпирическая ФРВ')
-    plt.plot('emperical', 'cdf_theor', data=df, label='Теоретическая ФРВ', linestyle=(0, (5, 5)))
-    plt.errorbar(x=df['emperical'][k], y=y, yerr=ks_stat/2, color='k',
-        capsize=4, mew=2, label=r"$\Delta$ =" + f"{ks_stat:.3f}")
-    if xticks_flag != None:
-        plt.xticks(xticks_arr, xticks_arr_change)
-    #plt.xticks([0.0, 50000, 100000, 150000, 200000], ['0', r'$1*10^{-3}$', r'$1,75*10^{-3}$'])
-    #plt.xticks([0.0, 50000, 100000, 150000, 200000], [0, 50000, 100000, 150000, 200000])
-    #plt.xticks([0.0, 0.001, 0.00175], [0.0, 0.001, 0.00175])
-    #plt.xticks([0.0, 0.0002, 0.0004, 0.0006, 0.0008], [0.0, 0.0002, 0.0004, 0.0006, 0.0008])
-    #plt.xticks([0.0, 0.0005, 0.001, 0.0015, 0.002], [0.0, 0.0005, 0.001, 0.0015, 0.002])
-    plt.legend(loc=4);
-    plt.grid(alpha=0.4, color='k')
-    plt.xlim(x_lim_min, max(df['emperical']))
-    plt.ylim(-0.01, 1.008)
-    plt.xlabel('Интервалы между моментами времени \nнаступления событий', fontsize=10)
-    plt.ylabel('Вероятность', fontsize=10)
-    plt.xticks([tick for tick in plt.xticks()[0]], [
-           str(tick).replace('.', ',') for tick in plt.xticks()[0]])
-    plt.yticks([tick for tick in plt.yticks()[0]], [
-           str(tick).replace('.', ',') for tick in plt.yticks()[0]])
-    if os.path.exists(main_path + '/pic/cdf/color/'+file_name) is not True:
-        os.mkdir(main_path + '/pic/cdf/color/'+file_name)
-    fig.savefig(main_path + '/pic/cdf/color/'+file_name+'/'+process_type+'.pdf', bbox_inches="tight");
-    
-    fig = plt.figure(figsize=(5, 3))
-    plt.plot('emperical', 'cdf_emp', data=df, label='Эмпирическая ФРВ', color='grey')
-    plt.plot('emperical', 'cdf_theor', data=df, label='Теоретическая ФРВ', color='k', linestyle=(0, (5, 5)))
-    plt.errorbar(x=df['emperical'][k], y=y, yerr=ks_stat/2, color='k',
-        capsize=4, mew=2, label=r"$\Delta$ =" + f"{ks_stat:.3f}")
-    if xticks_flag != None:
-        plt.xticks(xticks_arr, xticks_arr_change)
-    #plt.xticks([0.0, 50000, 100000, 150000, 200000], ['0', r'$1*10^{-3}$', r'$1,75*10^{-3}$'])
-    #plt.xticks([0.0, 50000, 100000, 150000, 200000], [0, 50000, 100000, 150000, 200000])
-    #plt.xticks([0.0, 0.001, 0.00175], [0.0, 0.001, 0.00175])
-    #plt.xticks([0.0, 0.0002, 0.0004, 0.0006, 0.0008], [0.0, 0.0002, 0.0004, 0.0006, 0.0008])
-    #plt.xticks([0.0, 0.0005, 0.001, 0.0015, 0.002], [0.0, 0.0005, 0.001, 0.0015, 0.002])
-    plt.legend(loc=4);
-    plt.grid(alpha=0.4, color='k')
-    plt.xlim(x_lim_min, max(df['emperical']))
-    plt.ylim(-0.01, 1.008)
-    plt.xlabel('Интервалы между моментами времени \nнаступления событий', fontsize=10)
-    plt.ylabel('Вероятность', fontsize=10)
-    plt.xticks([tick for tick in plt.xticks()[0]], [
-           str(tick).replace('.', ',') for tick in plt.xticks()[0]])
-    plt.yticks([tick for tick in plt.yticks()[0]], [
-           str(tick).replace('.', ',') for tick in plt.yticks()[0]])
-    if os.path.exists(main_path + '/pic/cdf/grey/'+file_name) is not True:
-        os.mkdir(main_path + '/pic/cdf/grey/'+file_name)
-    fig.savefig(main_path + '/pic/cdf/grey/'+file_name+'/'+process_type+'.pdf', bbox_inches="tight");
+    if mmpp_mode:
+        x, cdf1, cdf2 = data_source, theor_cdf[0], theor_cdf[1] 
+        k = np.argmax(np.abs(cdf1 - cdf2))
+        ks_stat = np.abs(cdf1[k] - cdf2[k])
+        y = (cdf1[k] + cdf2[k]) / 2
+    else:
+        df = data_source.copy()  # Avoid modifying the original DataFrame
+        df['cdf_theor'] = theor_cdf
+        k = np.argmax(np.abs(df['cdf_emp'] - df['cdf_theor']))
+        ks_stat = np.abs(df['cdf_emp'][k] - df['cdf_theor'][k])
+        y = (df['cdf_emp'][k] + df['cdf_theor'][k]) / 2
+        x = df['emperical']
 
-def kolmogorov_plot_mmpp(x, cdf1, cdf2, file_name, process_type, x_lim_min=0, xticks_flag=None, xticks_arr=None, xticks_arr_change=None):
-    main_path = os.getcwd().replace(os.sep, '/')
+    for color in colors:
+        fig = plt.figure(figsize=(5, 3))
 
-    k = np.argmax(np.abs(cdf1 - cdf2))
-    ks_stat = np.abs(cdf1[k] - cdf2[k])
-    y = (cdf1[k] + cdf2[k]) / 2
-    
-    fig = plt.figure(figsize=(5, 3))
-    plt.plot(x, cdf1, label='Эмпирическая ФРВ')
-    plt.plot(x, cdf2, label='Теоретическая ФРВ', linestyle=(0, (5, 5)))
-    plt.errorbar(x=x[k], y=y, yerr=ks_stat/2, color='k',
-        capsize=4, mew=2, label=r"$\Delta$ =" + f"{ks_stat:.3f}")
-    if xticks_flag != None:
-        plt.xticks(xticks_arr, xticks_arr_change)
-    #plt.xticks([0.0, 50000, 100000, 150000, 200000], ['0', r'$1*10^{-3}$', r'$1,75*10^{-3}$'])
-    #plt.xticks([0.0, 50000, 100000, 150000, 200000], [0, 50000, 100000, 150000, 200000])
-    #plt.xticks([0.0, 0.001, 0.00175], [0.0, 0.001, 0.00175])
-    #plt.xticks([0.0, 0.0002, 0.0004, 0.0006, 0.0008], [0.0, 0.0002, 0.0004, 0.0006, 0.0008])
-    #plt.xticks([0.0, 0.0005, 0.001, 0.0015, 0.002], [0.0, 0.0005, 0.001, 0.0015, 0.002])
-    plt.legend(loc=4);
-    plt.grid(alpha=0.4, color='k')
-    plt.xlim(x_lim_min, max(x))
-    plt.ylim(-0.01, 1.008)
-    plt.xlabel('Интервалы между моментами времени \nнаступления событий', fontsize=10)
-    plt.ylabel('Вероятность', fontsize=10)
-    plt.xticks([tick for tick in plt.xticks()[0]], [
-           str(tick).replace('.', ',') for tick in plt.xticks()[0]])
-    plt.yticks([tick for tick in plt.yticks()[0]], [
-           str(tick).replace('.', ',') for tick in plt.yticks()[0]])
-    if os.path.exists(main_path + '/pic/cdf/color/'+file_name) is not True:
-        os.mkdir(main_path + '/pic/cdf/color/'+file_name)
-    fig.savefig(main_path + '/pic/cdf/color/'+file_name+'/'+process_type+'.pdf', bbox_inches="tight");
-    
-    fig = plt.figure(figsize=(5, 3))
-    plt.plot(x, cdf1, label='Эмпирическая ФРВ', color='grey')
-    plt.plot(x, cdf2, label='Теоретическая ФРВ', color='k', linestyle=(0, (5, 5)))
-    plt.errorbar(x=x[k], y=y, yerr=ks_stat/2, color='k',
-        capsize=4, mew=2, label=r"$\Delta$ =" + f"{ks_stat:.3f}")
-    if xticks_flag != None:
-        plt.xticks(xticks_arr, xticks_arr_change)
-    #plt.xticks([0.0, 50000, 100000, 150000, 200000], ['0', r'$1*10^{-3}$', r'$1,75*10^{-3}$'])
-    #plt.xticks([0.0, 50000, 100000, 150000, 200000], [0, 50000, 100000, 150000, 200000])
-    #plt.xticks([0.0, 0.001, 0.00175], [0.0, 0.001, 0.00175])
-    #plt.xticks([0.0, 0.0002, 0.0004, 0.0006, 0.0008], [0.0, 0.0002, 0.0004, 0.0006, 0.0008])
-    #plt.xticks([0.0, 0.0005, 0.001, 0.0015, 0.002], [0.0, 0.0005, 0.001, 0.0015, 0.002])
-    plt.legend(loc=4);
-    plt.grid(alpha=0.4, color='k')
-    plt.xlim(x_lim_min, max(x))
-    plt.ylim(-0.01, 1.008)
-    plt.xlabel('Интервалы между моментами времени \nнаступления событий', fontsize=10)
-    plt.ylabel('Вероятность', fontsize=10)
-    plt.xticks([tick for tick in plt.xticks()[0]], [
-           str(tick).replace('.', ',') for tick in plt.xticks()[0]])
-    plt.yticks([tick for tick in plt.yticks()[0]], [
-           str(tick).replace('.', ',') for tick in plt.yticks()[0]])
-    if os.path.exists(main_path + '/pic/cdf/grey/'+file_name) is not True:
-        os.mkdir(main_path + '/pic/cdf/grey/'+file_name)
-    fig.savefig(main_path + '/pic/cdf/grey/'+file_name+'/'+process_type+'.pdf', bbox_inches="tight");
+        if mmpp_mode:
+            if color == 'grey':
+                plt.plot(x, cdf1, label='Эмпирическая ФРВ', color='grey')
+                plt.plot(x, cdf2, label='Теоретическая ФРВ', color='k', linestyle=(0, (5, 5)))
+            else:
+                plt.plot(x, cdf1, label='Эмпирическая ФРВ')
+                plt.plot(x, cdf2, label='Теоретическая ФРВ', linestyle=(0, (5, 5)))
+            plt.errorbar(x=x[k], y=y, yerr=ks_stat/2, color='k', capsize=4, mew=2, label=r"$\Delta$ =" + f"{ks_stat:.3f}")
+        else:
+            if color == 'grey':
+                plt.plot('emperical', 'cdf_emp', data=df, label='Эмпирическая ФРВ', color='grey')
+                plt.plot('emperical', 'cdf_theor', data=df, label='Теоретическая ФРВ', color='k', linestyle=(0, (5, 5)))
+            else:
+                plt.plot('emperical', 'cdf_emp', data=df, label='Эмпирическая ФРВ')
+                plt.plot('emperical', 'cdf_theor', data=df, label='Теоретическая ФРВ', linestyle=(0, (5, 5)))
+            plt.errorbar(x=df['emperical'][k], y=y, yerr=ks_stat/2, color='k', capsize=4, mew=2, label=r"$\Delta$ =" + f"{ks_stat:.3f}")
+
+        if xticks_flag:
+            plt.xticks(xticks_arr, xticks_arr_change)
+
+        plt.legend(loc=4)
+        plt.grid(alpha=0.4, color='k')
+        plt.xlim(x_lim_min, max(x)) 
+        plt.ylim(-0.01, 1.008)
+        plt.xlabel('Интервалы между моментами времени \nнаступления событий', fontsize=10)
+        plt.ylabel('Вероятность', fontsize=10)
+
+        save_path = f'{main_path}/pic/cdf/{color}/{file_name}'
+        if not os.path.exists(save_path):
+            os.makedirs(save_path, exist_ok=True)
+        fig.savefig(f'{save_path}/{process_type}.pdf', bbox_inches="tight")
 
 def hist_plot_test(data, file_name, bins_size=100, figsize=(10,3)):
     main_path = os.getcwd().replace(os.sep, '/')
+    colors = ['color', 'grey']
 
-    fig = plt.figure(figsize=figsize)
-    plt.hist(data, bins=bins_size, edgecolor='black', density=True)
-    plt.grid(alpha=0.1, color='k')
-    plt.xlim(min(data), max(data))
-    plt.xlabel('Время', fontsize=10)
-    plt.ylabel('Вероятность', fontsize=10)
-    plt.xticks([tick for tick in plt.xticks()[0]], [
-           str(tick).replace('.', ',') for tick in plt.xticks()[0]])
-    plt.yticks([tick for tick in plt.yticks()[0]], [
-           str(tick).replace('.', ',') for tick in plt.yticks()[0]])
-    if os.path.exists(main_path + '/pic/hist/color/'+file_name) is not True:
-        os.mkdir(main_path + '/pic/hist/color/'+file_name)
-    fig.savefig(main_path + '/pic/hist/color/'+file_name+'/'+ "_bins_size_" + str(bins_size)+'.pdf', bbox_inches="tight");
-
-    fig = plt.figure(figsize=figsize)
-    plt.hist(data, bins=bins_size, color="grey", edgecolor='black', density=True)
-    plt.grid(alpha=0.1, color='k')
-    plt.xlim(min(data), max(data))
-    plt.xlabel('Время', fontsize=10)
-    plt.ylabel('Вероятность', fontsize=10)
-    plt.xticks([tick for tick in plt.xticks()[0]], [
-           str(tick).replace('.', ',') for tick in plt.xticks()[0]])
-    plt.yticks([tick for tick in plt.yticks()[0]], [
-           str(tick).replace('.', ',') for tick in plt.yticks()[0]])
-    if os.path.exists(main_path + '/pic/hist/grey/'+file_name) is not True:
-        os.mkdir(main_path + '/pic/hist/grey/'+file_name)
-    fig.savefig(main_path + '/pic/hist/grey/'+file_name+'/'+ "_bins_size_" + str(bins_size)+'.pdf', bbox_inches="tight");
+    for color in colors:
+        fig = plt.figure(figsize=figsize)
+        if color == 'grey':
+            plt.hist(data, bins=bins_size, color="grey", edgecolor='black', density=False) 
+        else:
+            plt.hist(data, bins=bins_size, edgecolor='black', density=False)
+        
+        plt.grid(alpha=0.1, color='k')
+        plt.xlim(min(data), max(data))
+        plt.xlabel('Длина интервалов', fontsize=10)
+        plt.ylabel('Количество интервалов', fontsize=10)
+        
+        save_path = f'{main_path}/pic/hist/{color}/{file_name}'
+        
+        if not os.path.exists(save_path):
+            os.makedirs(save_path, exist_ok=True)
+            
+        fig.savefig(f'{save_path}/_bins_size_{bins_size}.pdf', bbox_inches="tight")
