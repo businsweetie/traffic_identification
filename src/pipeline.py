@@ -359,5 +359,31 @@ def start():
     kolmogorov_plot(df_result, theor_cdf, file_name, "recurr_levi", x_lim_min=0, xticks_flag=False)
     write_txt(file_name, 'recurr', out_dict_recurr)
 
+
+
+    out_dict_recurr['------------------------------------------------------------------------------'] = ' '
+    out_dict_recurr['7. РАСПРЕДЕЛЕНИЕ ФИШЕРА:'] = ' '
+    out_dict_recurr['   '] = ' '
+    model_param = recurr_levi_model.predict(df_intervals)
+    mm_param = levi_method_moments(df_intervals)
+    print(model_param)
+    print(mm_param)
+    if model_param[0][0] > 0 and model_param[0][1] > 0:
+        out_dict_recurr['МЕТОД НАИМЕНЬШИХ КВАДРАТОВ'] = ' '
+        out_dict_recurr['МНК Параметр mu местоположение:'] = "{:.3f}".format(mm_param[0])
+        out_dict_recurr['МНК Параметр c масштаб:'] = "{:.3f}".format(mm_param[1])
+        out_dict_recurr['ОЦЕНКА МОДЕЛЬЮ'] = ' '
+        out_dict_recurr['Параметр mu местоположение:'] = "{:.3f}".format(model_param[0][0])
+        out_dict_recurr['Параметр c масштаб:'] = "{:.3f}".format(model_param[0][1])
+        out_dict_recurr["Интенсивность эмпирическая:"] = "{:.3f}".format(lmbd_emp[0])
+        # out_dict_recurr['Интенсивность теоретическая:'] = "{:.3f}".format(1 / (theta * gamma(1 + 1 / k)))
+        # theor_cdf = [distribution_function_weibull(df_result['emperical'][i], theta, k) for i in range(len(df_result['emperical']))]
+        # out_dict_recurr['Расстояние Колмогорова:'] = "{:.3f}".format(kolmogorov(df_result['cdf_emp'], theor_cdf))
+    else:
+        out_dict_recurr['Значение интенсивности некорректно'] = ' '
+    out_dict_recurr['     '] = ' '
+    kolmogorov_plot(df_result, theor_cdf, file_name, "recurr_levi", x_lim_min=0, xticks_flag=False)
+    write_txt(file_name, 'recurr', out_dict_recurr)
+
     
 start()

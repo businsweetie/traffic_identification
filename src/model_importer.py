@@ -63,11 +63,19 @@ log.info('hyper model added')
 # recurr_lognorm_sigma_model.load_model(main_path + "/src/trained_models/lognorm/recurr_lognorm_sigma")
 # log.info('lognorm model added')
 
+recurr_lognorm_model = CatBoostRegressor()
+recurr_lognorm_model.load_model(main_path + "\src\trained_models\new_model\lognorm\lognorm_stat")
+log.info('lognorm model added')
+
 # recurr_uniform_a_model = CatBoostRegressor()
 # recurr_uniform_b_model = CatBoostRegressor()
 # recurr_uniform_a_model.load_model(main_path + "/src/trained_models/uniform/recurr_uniform_a")
 # recurr_uniform_b_model.load_model(main_path + "/src/trained_models/uniform/recurr_uniform_b")
 # log.info('uniform model added')
+
+recurr_uni_model = CatBoostRegressor()
+recurr_uni_model.load_model(main_path + "\src\trained_models\new_model\uniform\uni_stat")
+log.info('uniform model added')
 
 # recurr_weibull_theta_model = CatBoostRegressor()
 # recurr_weibull_k_model = CatBoostRegressor()
@@ -75,6 +83,38 @@ log.info('hyper model added')
 # recurr_weibull_k_model.load_model(main_path + "/src/trained_models/weibull/recurr_weibull_k")
 # log.info('weibull model added')
 
+recurr_weibull_model = CatBoostRegressor()
+recurr_weibull_model.load_model(main_path + "/src/trained_models/weibull/recurr_weibull_theta")
+log.info('weibull model added')
+
 recurr_levi_model = CatBoostRegressor()
 recurr_levi_model.load_model(main_path + "/src/trained_models/new_model/levi/levi_stat_model.cbm")
 log.info('levi model added')
+
+recurr_phisher_model = CatBoostRegressor()
+recurr_phisher_model.load_model(main_path + "\src\trained_models\new_model\phisher\phisher_stat_model.cbm")
+log.info('phisher model added')
+
+recurr_pareto_model = CatBoostRegressor()
+recurr_pareto_model.load_model(main_path + "\src\trained_models\new_model\phisher\phisher_stat_model.cbm")
+log.info('pareto model added')
+
+recurr_invgamma_model = CatBoostRegressor()
+recurr_invgamma_model.load_model(main_path + "\src\trained_models\new_model\pareto\pareto_stat_model.cbm")
+log.info('invgamma model added')
+
+recurr_lomax_model = CatBoostRegressor()
+recurr_lomax_model.load_model(main_path + "\src\trained_models\new_model\lomax\lomax_stat_model.cbm")
+log.info('lomax model added')
+
+recurr_burr_model = CatBoostRegressor()
+recurr_burr_model.load_model(main_path + "\src\trained_models\new_model\burr\BurrXII_stat_model.cbm")
+log.info('burr model added')
+
+recurr_frechet_model = CatBoostRegressor()
+recurr_frechet_model.load_model(main_path + "\src\trained_models\new_model\frechet\Frechet_stat_model.cbm")
+log.info('frechet model added')
+
+recurr_frechet_model = CatBoostRegressor()
+recurr_frechet_model.load_model(main_path + "\src\trained_models\new_model\frechet\Frechet_stat_model.cbm")
+log.info('frechet model added')
