@@ -6,17 +6,17 @@ from scipy import optimize
 from scipy.special import erfc
 from scipy import stats
 
-def gamma_method_moments(inervals_df):
-    mean_emp = inervals_df.mean(axis=1)
-    var_emp = inervals_df.var(axis=1)
+def gamma_method_moments(df_intervals):
+    mean_emp = df_intervals.mean(axis=1)
+    var_emp = df_intervals.var(axis=1)
 
     alpha = mean_emp ** 2 / var_emp
     beta = var_emp / mean_emp
     return alpha, beta
 
-def lognorm_method_moments(inervals_df):
-    mean_empirical = inervals_df.mean(axis=1)
-    var_emp = inervals_df.var(axis=1)
+def lognorm_method_moments(df_intervals):
+    mean_empirical = df_intervals.mean(axis=1)
+    var_emp = df_intervals.var(axis=1)
     results = []
 
     for mean, var in zip(mean_empirical, var_emp):
@@ -44,9 +44,9 @@ def lognorm_method_moments(inervals_df):
 
     return np.array(results, dtype=object)  # Возвращаем NumPy массив
 
-def uni_method_moments(inervals_df):
-    mean_empirical = inervals_df.mean(axis=1)
-    var_emp = inervals_df.var(axis=1)
+def uni_method_moments(df_intervals):
+    mean_empirical = df_intervals.mean(axis=1)
+    var_emp = df_intervals.var(axis=1)
 
     a, b = symbols('a b')  # Определяем символьные переменные
 
@@ -87,11 +87,11 @@ def uni_method_moments(inervals_df):
             print(f"Другая ошибка при решении для mean={mean_emp}, var={var_emp}: {e}")
             results.append(None)
 
-    return results
+    return np.array(results, dtype=object)
 
-def weibull_method_moments(inervals_df):
-    mean_empirical = inervals_df.mean(axis=1)
-    moment2_empirical = (inervals_df**2).mean(axis=1)
+def weibull_method_moments(df_intervals):
+    mean_empirical = df_intervals.mean(axis=1)
+    moment2_empirical = (df_intervals**2).mean(axis=1)
 
     results = []
 
@@ -126,11 +126,11 @@ def weibull_method_moments(inervals_df):
             print(f"Ошибка при оценке параметров для m1={m1}, m2={m2}: {e}")
             results.append(None)
 
-    return results
+    return np.array(results, dtype=object)
 
-def hexp_method_moments(inervals_df):
-    mean_empirical = inervals_df.mean(axis=1)
-    moment2_empirical = (inervals_df**2).mean(axis=1)
+def hexp_method_moments(df_intervals):
+    mean_empirical = df_intervals.mean(axis=1)
+    moment2_empirical = (df_intervals**2).mean(axis=1)
 
     cv = np.sqrt(moment2_empirical-mean_empirical**2)/mean_empirical
     p = 0.5*(1-np.sqrt((cv-1)/(cv+1)))
@@ -139,9 +139,9 @@ def hexp_method_moments(inervals_df):
 
     return l2, l1, p
 
-def levi_method_moments(inervals_df):
-    sample_sorted = np.sort(inervals_df)
-    ecdf = np.arange(1, len(inervals_df) + 1) / len(inervals_df)
+def levi_method_moments(df_intervals):
+    sample_sorted = np.sort(df_intervals)
+    ecdf = np.arange(1, len(df_intervals) + 1) / len(df_intervals)
     
     def levy_cdf(x, mu, c):
         mask = x > mu
@@ -157,20 +157,20 @@ def levi_method_moments(inervals_df):
         theoretical_cdf = levy_cdf(x, mu, c)
         return np.sum((theoretical_cdf - ecdf_values)**2)
     
-    mu_init = np.median(inervals_df) - 1
-    c_init = 1 / (2 * np.mean(1 / (inervals_df - mu_init)))
+    mu_init = np.median(df_intervals) - 1
+    c_init = 1 / (2 * np.mean(1 / (df_intervals - mu_init)))
 
     result = optimize.minimize(
         error_function,
         [mu_init, c_init],
         args=(sample_sorted, ecdf),
-        bounds=[(None, np.min(inervals_df)), (1e-10, None)]  # μ < min(sample), c > 0
+        bounds=[(None, np.min(df_intervals)), (1e-10, None)]  # μ < min(sample), c > 0
     )
     return result.x
 
-def phisher_method_moments(inervals_df):
-    sample_sorted = np.sort(inervals_df)
-    ecdf = np.arange(1, len(inervals_df) + 1) / len(inervals_df)
+def phisher_method_moments(df_intervals):
+    sample_sorted = np.sort(df_intervals)
+    ecdf = np.arange(1, len(df_intervals) + 1) / len(df_intervals)
     
     def fisher_cdf(x, dfn, dfd):
         """
@@ -206,10 +206,10 @@ def phisher_method_moments(inervals_df):
     
     return result.x
 
-def pareto_method_moments(inervals_df):
+def pareto_method_moments(df_intervals):
         # Сортировка выборки и вычисление эмпирической ФРС
-    sample_sorted = np.sort(inervals_df)
-    ecdf = np.arange(1, len(inervals_df) + 1) / len(inervals_df)
+    sample_sorted = np.sort(df_intervals)
+    ecdf = np.arange(1, len(df_intervals) + 1) / len(df_intervals)
     
     def pareto_cdf(x, b, scale):
         return stats.pareto.cdf(x, b, scale=scale)
@@ -228,8 +228,8 @@ def pareto_method_moments(inervals_df):
         return np.sum((theoretical_cdf - ecdf_values) ** 2)
     
     # Начальные предположения для параметров методом моментов
-    sample_mean = np.mean(inervals_df)
-    sample_min = np.min(inervals_df)
+    sample_mean = np.mean(df_intervals)
+    sample_min = np.min(df_intervals)
     
     b_init = 1 / (sample_mean / sample_min - 1)
     scale_init = sample_min
@@ -246,8 +246,8 @@ def pareto_method_moments(inervals_df):
     
     return result.x
 
-def inverse_gamma_method_moments(inervals_df):
-    sample_sorted = np.sort(inervals_df)
+def inverse_gamma_method_moments(df_intervals):
+    sample_sorted = np.sort(df_intervals)
     ecdf = np.arange(1, len(sample_sorted) + 1) / len(sample_sorted)
 
     def invgamma_cdf(x, a, scale):
@@ -264,7 +264,7 @@ def inverse_gamma_method_moments(inervals_df):
     # Начальные предположения для параметров методом моментов:
     # Для обратного гамма распределения, математическое ожидание равно scale/(a-1) при a > 1.
     # Выберем a_init = 3.0, тогда scale_init = sample_mean * (a_init - 1)
-    sample_mean = np.mean(inervals_df)
+    sample_mean = np.mean(df_intervals)
     a_init = 3.0
     scale_init = sample_mean * (a_init - 1)
 
@@ -280,8 +280,8 @@ def inverse_gamma_method_moments(inervals_df):
 
     return result.x
 
-def lomax_method_moments(inervals_df):
-    sample_sorted = np.sort(inervals_df)
+def lomax_method_moments(df_intervals):
+    sample_sorted = np.sort(df_intervals)
     ecdf = np.arange(1, len(sample_sorted) + 1) / len(sample_sorted)
     
     def lomax_cdf(x, alpha, lambda_):
@@ -297,8 +297,8 @@ def lomax_method_moments(inervals_df):
         return np.sum((theoretical_cdf - ecdf_values) ** 2)
     
     # Начальные предположения для параметров: shape и scale
-    m_sample = np.mean(inervals_df)
-    v_sample = np.var(inervals_df)
+    m_sample = np.mean(df_intervals)
+    v_sample = np.var(df_intervals)
     # Если дисперсия меньше или равна квадрату среднего, используем запасное значение
     if v_sample <= m_sample**2:
         initial_guess = [0.7, 3]
@@ -315,9 +315,9 @@ def lomax_method_moments(inervals_df):
     )
     return result.x
 
-def bura_method_moments(inervals_df):
+def bura_method_moments(df_intervals):
     # Сортировка выборки и вычисление эмпирической ФРС
-    sample_sorted = np.sort(inervals_df)
+    sample_sorted = np.sort(df_intervals)
     ecdf = np.arange(1, len(sample_sorted) + 1) / len(sample_sorted)
     
     def burr_cdf(x, c, k, lam):
@@ -338,9 +338,9 @@ def bura_method_moments(inervals_df):
     
     # Начальные предположения: если доступны true_c, true_k, true_lam, использовать их, иначе задать 1.0
     # Estimate initial parameters using method of moments
-    mean = np.mean(inervals_df)
-    var = np.var(inervals_df)
-    skew = stats.skew(inervals_df)
+    mean = np.mean(df_intervals)
+    var = np.var(df_intervals)
+    skew = stats.skew(df_intervals)
     
     # Rough approximations for Burr XII parameters
     initial_k = max(1.0, abs(skew))  # k affects the shape/skewness
@@ -360,8 +360,8 @@ def bura_method_moments(inervals_df):
     
     return result.x
 
-def phreshe_method_moments(inervals_df):
-    sample_sorted = np.sort(inervals_df)
+def phreshe_method_moments(df_intervals):
+    sample_sorted = np.sort(df_intervals)
     ecdf = np.arange(1, len(sample_sorted) + 1) / len(sample_sorted)
     
     def frechet_cdf(x, alpha, s, m):

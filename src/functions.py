@@ -12,9 +12,9 @@ def get_intervals_from_df(df):
     """
     Вычисляет интервалы между соседними столбцами DataFrame.
     """
-    intervals = df.diff(axis=1).iloc[:, 1:]
-    intervals.columns = range(intervals.shape[1])
-    return intervals
+    df_intervals = df.diff(axis=1).iloc[:, 1:]
+    df_intervals.columns = range(df_intervals.shape[1])
+    return df_intervals
     
 
 def get_cdf_from_intervals(df_intervals):
@@ -35,6 +35,24 @@ def get_cdf_from_intervals(df_intervals):
     df_result['cdf_emp'] = np.cumsum(df_result['prob'])
 
     return df_result
+
+
+def calculate_statistics(df_intervals):
+    n_observations = df_intervals.shape[0]
+    stat_M = np.zeros((n_observations, 10))
+
+    # Векторизованные вычисления для основных статистик
+    stat_M[:, 0] = np.mean(df_intervals, axis=1)
+    stat_M[:, 1] = np.var(df_intervals, axis=1)
+    stat_M[:, 2] = np.std(df_intervals, axis=1)
+    stat_M[:, 3] = stat_M[:, 2] / stat_M[:, 0]  # Коэффициент вариации
+
+    # Квантили. Избегаем повторного вычисления квантилей
+    quantiles = [0.1, 0.25, 0.5, 0.75, 0.9, 0.95]
+    quantiles_values = np.quantile(df_intervals, quantiles, axis=1)
+    stat_M[:, 4:10] = quantiles_values.T # Транспонируем, чтобы правильно разместить
+
+    return stat_M
 
 
 def ecdf_with_all_x(data1, data2):
