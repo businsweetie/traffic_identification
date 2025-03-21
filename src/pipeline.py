@@ -19,8 +19,8 @@ def start():
     df_intervals = get_intervals_from_df(df_moments)
     df_stat = calculate_statistics(df_intervals)
 
-    print(df_moments.shape)
-    print(df_intervals.shape)
+    # print(df_moments.shape)
+    # print(df_intervals.shape)
     
     lmbd_emp = df_intervals.shape[1] / np.sum(df_intervals, axis=1)
     df_result = get_cdf_from_intervals(df_intervals)
@@ -169,7 +169,6 @@ def start():
     # alpha = recurr_gamma_alpha_model.predict(df_intervals)[0]
     # beta = recurr_gamma_beta_model.predict(df_intervals)[0]
     model_param = recurr_gamma_model.predict(df_intervals)
-    print('model_param', model_param)
     alpha_mm, beta_mm = gamma_method_moments(df_intervals)
     if model_param[0][0] > 0 and model_param[0][1] > 0:
         out_dict_recurr['МЕТОД МОМЕНТОВ'] = ' '
@@ -340,8 +339,6 @@ def start():
     out_dict_recurr['   '] = ' '
     model_param = recurr_levi_model.predict(df_intervals)
     mm_param = levi_method_moments(df_intervals)
-    print(model_param)
-    print(mm_param)
     if model_param[0][0] > 0 and model_param[0][1] > 0:
         out_dict_recurr['МЕТОД НАИМЕНЬШИХ КВАДРАТОВ'] = ' '
         out_dict_recurr['МНК Параметр mu местоположение:'] = "{:.3f}".format(mm_param[0])
@@ -358,32 +355,165 @@ def start():
     out_dict_recurr['     '] = ' '
     kolmogorov_plot(df_result, theor_cdf, file_name, "recurr_levi", x_lim_min=0, xticks_flag=False)
     write_txt(file_name, 'recurr', out_dict_recurr)
+    out_dict_recurr = {}
 
 
 
     out_dict_recurr['------------------------------------------------------------------------------'] = ' '
     out_dict_recurr['7. РАСПРЕДЕЛЕНИЕ ФИШЕРА:'] = ' '
     out_dict_recurr['   '] = ' '
-    model_param = recurr_levi_model.predict(df_intervals)
-    mm_param = levi_method_moments(df_intervals)
-    print(model_param)
-    print(mm_param)
+    model_param = recurr_phisher_model.predict(df_intervals)
+    mm_param = phisher_method_moments(df_intervals)
     if model_param[0][0] > 0 and model_param[0][1] > 0:
         out_dict_recurr['МЕТОД НАИМЕНЬШИХ КВАДРАТОВ'] = ' '
-        out_dict_recurr['МНК Параметр mu местоположение:'] = "{:.3f}".format(mm_param[0])
-        out_dict_recurr['МНК Параметр c масштаб:'] = "{:.3f}".format(mm_param[1])
+        out_dict_recurr['МНК Параметр d1:'] = "{:.3f}".format(mm_param[0])
+        out_dict_recurr['МНК Параметр d2:'] = "{:.3f}".format(mm_param[1])
         out_dict_recurr['ОЦЕНКА МОДЕЛЬЮ'] = ' '
-        out_dict_recurr['Параметр mu местоположение:'] = "{:.3f}".format(model_param[0][0])
-        out_dict_recurr['Параметр c масштаб:'] = "{:.3f}".format(model_param[0][1])
+        out_dict_recurr['Параметр d1:'] = "{:.3f}".format(model_param[0][0])
+        out_dict_recurr['Параметр d2:'] = "{:.3f}".format(model_param[0][1])
         out_dict_recurr["Интенсивность эмпирическая:"] = "{:.3f}".format(lmbd_emp[0])
-        # out_dict_recurr['Интенсивность теоретическая:'] = "{:.3f}".format(1 / (theta * gamma(1 + 1 / k)))
-        # theor_cdf = [distribution_function_weibull(df_result['emperical'][i], theta, k) for i in range(len(df_result['emperical']))]
-        # out_dict_recurr['Расстояние Колмогорова:'] = "{:.3f}".format(kolmogorov(df_result['cdf_emp'], theor_cdf))
+        if model_param[0][1] > 2:
+            out_dict_recurr['Интенсивность теоретическая:'] = "{:.3f}".format(1 / (model_param[0][1]/(model_param[0][1]-2)))
+            theor_cdf = [distribution_function_phisher(df_result['emperical'][i], model_param[0][0], model_param[0][1]) for i in range(len(df_result['emperical']))]
+            out_dict_recurr['Расстояние Колмогорова:'] = "{:.3f}".format(kolmogorov(df_result['cdf_emp'], theor_cdf))
     else:
         out_dict_recurr['Значение интенсивности некорректно'] = ' '
     out_dict_recurr['     '] = ' '
-    kolmogorov_plot(df_result, theor_cdf, file_name, "recurr_levi", x_lim_min=0, xticks_flag=False)
+    kolmogorov_plot(df_result, theor_cdf, file_name, "recurr_phisher", x_lim_min=0, xticks_flag=False)
     write_txt(file_name, 'recurr', out_dict_recurr)
+    out_dict_recurr = {}
 
+
+    out_dict_recurr['------------------------------------------------------------------------------'] = ' '
+    out_dict_recurr['8. РАСПРЕДЕЛЕНИЕ ПАРЕТО:'] = ' '
+    out_dict_recurr['   '] = ' '
+    model_param = recurr_pareto_model.predict(df_intervals)
+    mm_param = pareto_method_moments(df_intervals)
+    if model_param[0][0] > 0 and model_param[0][1] > 0:
+        out_dict_recurr['МЕТОД НАИМЕНЬШИХ КВАДРАТОВ'] = ' '
+        out_dict_recurr['МНК Параметр 1:'] = "{:.3f}".format(mm_param[0])
+        out_dict_recurr['МНК Параметр 2:'] = "{:.3f}".format(mm_param[1])
+        out_dict_recurr['ОЦЕНКА МОДЕЛЬЮ'] = ' '
+        out_dict_recurr['Параметр 1:'] = "{:.3f}".format(model_param[0][0])
+        out_dict_recurr['Параметр 2:'] = "{:.3f}".format(model_param[0][1])
+        out_dict_recurr["Интенсивность эмпирическая:"] = "{:.3f}".format(lmbd_emp[0])
+        if model_param[0][1] > 1:
+            out_dict_recurr['Интенсивность теоретическая:'] = "{:.3f}".format(1 / ((model_param[0][0] * model_param[0][1])/(model_param[0][1]-1)) )
+            theor_cdf = [distribution_function_pareto(df_result['emperical'][i], model_param[0][0], model_param[0][1]) for i in range(len(df_result['emperical']))]
+            out_dict_recurr['Расстояние Колмогорова:'] = "{:.3f}".format(kolmogorov(df_result['cdf_emp'], theor_cdf))
+    else:
+        out_dict_recurr['Значение интенсивности некорректно'] = ' '
+    out_dict_recurr['     '] = ' '
+    kolmogorov_plot(df_result, theor_cdf, file_name, "recurr_pareto", x_lim_min=0, xticks_flag=False)
+    write_txt(file_name, 'recurr', out_dict_recurr)
+    out_dict_recurr = {}
+
+
+
+    out_dict_recurr['------------------------------------------------------------------------------'] = ' '
+    out_dict_recurr['9. ОБРАТНОЕ ГАММА РАСПРЕДЕЛЕНИЕ:'] = ' '
+    out_dict_recurr['   '] = ' '
+    model_param = recurr_invgamma_model.predict(df_intervals)
+    mm_param = inverse_gamma_method_moments(df_intervals)
+    if model_param[0][0] > 0 and model_param[0][1] > 0:
+        out_dict_recurr['МЕТОД НАИМЕНЬШИХ КВАДРАТОВ'] = ' '
+        out_dict_recurr['МНК Параметр 1:'] = "{:.3f}".format(mm_param[0])
+        out_dict_recurr['МНК Параметр 2:'] = "{:.3f}".format(mm_param[1])
+        out_dict_recurr['ОЦЕНКА МОДЕЛЬЮ'] = ' '
+        out_dict_recurr['Параметр 1:'] = "{:.3f}".format(model_param[0][0])
+        out_dict_recurr['Параметр 2:'] = "{:.3f}".format(model_param[0][1])
+        out_dict_recurr["Интенсивность эмпирическая:"] = "{:.3f}".format(lmbd_emp[0])
+        if model_param[0][0] > 1:
+            out_dict_recurr['Интенсивность теоретическая:'] = "{:.3f}".format(1 / (model_param[0][1]/(model_param[0][0]-1)) )
+            theor_cdf = [distribution_function_invgamma(df_result['emperical'][i], model_param[0][0], model_param[0][1]) for i in range(len(df_result['emperical']))]
+            out_dict_recurr['Расстояние Колмогорова:'] = "{:.3f}".format(kolmogorov(df_result['cdf_emp'], theor_cdf))
+    else:
+        out_dict_recurr['Значение интенсивности некорректно'] = ' '
+    out_dict_recurr['     '] = ' '
+    kolmogorov_plot(df_result, theor_cdf, file_name, "recurr_invgamma", x_lim_min=0, xticks_flag=False)
+    write_txt(file_name, 'recurr', out_dict_recurr)
+    out_dict_recurr = {}
+
+
+
+    out_dict_recurr['------------------------------------------------------------------------------'] = ' '
+    out_dict_recurr['10. РАСПРЕДЕЛЕНИЕ ЛОМАКСА:'] = ' '
+    out_dict_recurr['   '] = ' '
+    model_param = recurr_invgamma_model.predict(df_intervals)
+    mm_param = inverse_gamma_method_moments(df_intervals)
+    if model_param[0][0] > 0 and model_param[0][1] > 0:
+        out_dict_recurr['МЕТОД НАИМЕНЬШИХ КВАДРАТОВ'] = ' '
+        out_dict_recurr['МНК Параметр 1:'] = "{:.3f}".format(mm_param[0])
+        out_dict_recurr['МНК Параметр 2:'] = "{:.3f}".format(mm_param[1])
+        out_dict_recurr['ОЦЕНКА МОДЕЛЬЮ'] = ' '
+        out_dict_recurr['Параметр 1:'] = "{:.3f}".format(model_param[0][0])
+        out_dict_recurr['Параметр 2:'] = "{:.3f}".format(model_param[0][1])
+        out_dict_recurr["Интенсивность эмпирическая:"] = "{:.3f}".format(lmbd_emp[0])
+        if model_param[0][0] > 1:
+            out_dict_recurr['Интенсивность теоретическая:'] = "{:.3f}".format(1 / (model_param[0][1]/(model_param[0][0]-1)) )
+            theor_cdf = [distribution_function_invgamma(df_result['emperical'][i], model_param[0][1], model_param[0][0]) for i in range(len(df_result['emperical']))]
+            out_dict_recurr['Расстояние Колмогорова:'] = "{:.3f}".format(kolmogorov(df_result['cdf_emp'], theor_cdf))
+    else:
+        out_dict_recurr['Значение интенсивности некорректно'] = ' '
+    out_dict_recurr['     '] = ' '
+    kolmogorov_plot(df_result, theor_cdf, file_name, "recurr_lomax", x_lim_min=0, xticks_flag=False)
+    write_txt(file_name, 'recurr', out_dict_recurr)
+    out_dict_recurr = {}
+
+
+
+    out_dict_recurr['------------------------------------------------------------------------------'] = ' '
+    out_dict_recurr['11. РАСПРЕДЕЛЕНИЕ БУРА XII:'] = ' '
+    out_dict_recurr['   '] = ' '
+    model_param = recurr_burr_model.predict(df_intervals)
+    mm_param = bura_method_moments(df_intervals)
+    if model_param[0][0] > 0 and model_param[0][1] > 0:
+        out_dict_recurr['МЕТОД НАИМЕНЬШИХ КВАДРАТОВ'] = ' '
+        out_dict_recurr['МНК Параметр c:'] = "{:.3f}".format(mm_param[0])
+        out_dict_recurr['МНК Параметр k:'] = "{:.3f}".format(mm_param[1])
+        out_dict_recurr['МНК Параметр lmbd:'] = "{:.3f}".format(mm_param[2])
+        out_dict_recurr['ОЦЕНКА МОДЕЛЬЮ'] = ' '
+        out_dict_recurr['Параметр c:'] = "{:.3f}".format(model_param[0][0])
+        out_dict_recurr['Параметр k:'] = "{:.3f}".format(model_param[0][1])
+        out_dict_recurr['Параметр lmbd:'] = "{:.3f}".format(model_param[0][2])
+        out_dict_recurr["Интенсивность эмпирическая:"] = "{:.3f}".format(lmbd_emp[0])
+        out_dict_recurr['Интенсивность теоретическая:'] = "{:.3f}".format(1 / (model_param[0][1] * beta_func((model_param[0][1]-1)/model_param[0][0], 1+(1/model_param[0][0]))) )
+        theor_cdf = [distribution_function_burr(df_result['emperical'][i], model_param[0][0], model_param[0][1], model_param[0][2]) for i in range(len(df_result['emperical']))]
+        out_dict_recurr['Расстояние Колмогорова:'] = "{:.3f}".format(kolmogorov(df_result['cdf_emp'], theor_cdf))
+    else:
+        out_dict_recurr['Значение интенсивности некорректно'] = ' '
+    out_dict_recurr['     '] = ' '
+    kolmogorov_plot(df_result, theor_cdf, file_name, "recurr_burr", x_lim_min=0, xticks_flag=False)
+    write_txt(file_name, 'recurr', out_dict_recurr)
+    out_dict_recurr = {}
     
+
+
+    out_dict_recurr['------------------------------------------------------------------------------'] = ' '
+    out_dict_recurr['12. РАСПРЕДЕЛЕНИЕ ФРЕШЕ:'] = ' '
+    out_dict_recurr['   '] = ' '
+    model_param = recurr_frechet_model.predict(df_intervals)
+    mm_param = phreshet_method_moments(df_intervals)
+    if model_param[0][0] > 0 and model_param[0][1] > 0:
+        out_dict_recurr['МЕТОД НАИМЕНЬШИХ КВАДРАТОВ'] = ' '
+        out_dict_recurr['МНК Параметр alpha:'] = "{:.3f}".format(mm_param[0])
+        out_dict_recurr['МНК Параметр s:'] = "{:.3f}".format(mm_param[1])
+        out_dict_recurr['МНК Параметр m:'] = "{:.3f}".format(mm_param[2])
+        out_dict_recurr['ОЦЕНКА МОДЕЛЬЮ'] = ' '
+        out_dict_recurr['Параметр alpha:'] = "{:.3f}".format(model_param[0][0])
+        out_dict_recurr['Параметр s:'] = "{:.3f}".format(model_param[0][1])
+        out_dict_recurr['Параметр m:'] = "{:.3f}".format(model_param[0][2])
+        out_dict_recurr["Интенсивность эмпирическая:"] = "{:.3f}".format(lmbd_emp[0])
+        if model_param[0][0]>1:
+            out_dict_recurr['Интенсивность теоретическая:'] = "{:.3f}".format(1 / (model_param[0][2] + model_param[0][1]*gamma(1-1/model_param[0][0])))
+            theor_cdf = [distribution_function_phrechet(df_result['emperical'][i], model_param[0][0], model_param[0][1], model_param[0][2]) for i in range(len(df_result['emperical']))]
+            out_dict_recurr['Расстояние Колмогорова:'] = "{:.3f}".format(kolmogorov(df_result['cdf_emp'], theor_cdf))
+        else:
+            out_dict_recurr['Интенсивность теоретическая:'] = 'infinity'
+    else:
+        out_dict_recurr['Значение интенсивности некорректно'] = ' '
+    out_dict_recurr['     '] = ' '
+    kolmogorov_plot(df_result, theor_cdf, file_name, "recurr_phrechet", x_lim_min=0, xticks_flag=False)
+    write_txt(file_name, 'recurr', out_dict_recurr)
+    out_dict_recurr = {}
 start()

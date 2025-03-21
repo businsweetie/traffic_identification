@@ -4,9 +4,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
-from scipy.special import gammaincc
-from scipy.stats import expon, lognorm, uniform, weibull_min, ttest_ind, mannwhitneyu, kstest
-
+from scipy.special import gammaincc, gamma
+from scipy.stats import expon, lognorm, uniform, weibull_min, ttest_ind, mannwhitneyu, kstest, f, pareto, invgamma
 
 def get_intervals_from_df(df):
     """
@@ -81,6 +80,46 @@ def distribution_function_uniform(x, a, b):
 
 def distribution_function_weibull(x, theta, k):
     return weibull_min.cdf(x, k, loc=0, scale=theta)
+
+def distribution_function_phisher(x, dfn, dfd):
+    return f.cdf(x, dfn, dfd)
+
+def distribution_function_pareto(x, b, scale):
+    return pareto.cdf(x, b, scale=scale)
+
+def distribution_function_invgamma(x, a, scale):
+    return invgamma.cdf(x, a, scale=scale)
+
+def distribution_function_lomax(x, alpha, lmbd):
+    return 1 - (1 + x / lmbd) ** (-alpha)
+
+def distribution_function_burr(x, c, k, lmbd):
+    """
+    Кумулятивная функция распределения Burr XII с параметрами:
+    c (масштаб), k (параметр формы), lam (параметр хвоста).
+    Для x < 0 считается, что F(x)=0.
+    """
+    cdf = np.zeros_like(x)
+    valid = x >= 0
+    cdf[valid] =  1 - (1 + (x[valid] / lmbd) ** c) ** (-k)
+    return cdf
+
+def distribution_function_phrechet(x, alpha, s, m):
+    """
+    Кумулятивная функция распределения Фреше с 3 параметрами.
+    x - наблюдения,
+    alpha - параметр формы,
+    s - параметр масштаба (s > 0),
+    m - параметр сдвига (локация).
+    Для x < m считается, что F(x) = 0.
+    """
+    cdf = np.zeros_like(x)
+    valid = x > m
+    cdf[valid] = np.exp(-(((x[valid] - m) / s) ** (-alpha)))
+    return cdf
+
+def beta_func(z1, z2):
+    return (gamma(z1)*gamma(z2))/(gamma(z1+z2))
 
 # def distribution_function(x, dist_type, *params):
 #     if dist_type == 'exp':

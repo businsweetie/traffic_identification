@@ -320,27 +320,30 @@ def bura_method_moments(df_intervals):
     sample_sorted = np.sort(df_intervals)
     ecdf = np.arange(1, len(sample_sorted) + 1) / len(sample_sorted)
     
-    def burr_cdf(x, c, k, lam):
+    def burr_cdf(x, c, k, lmbd):
         """
         Кумулятивная функция распределения Burr XII с параметрами:
-        c (масштаб), k (параметр формы), lam (параметр хвоста).
+        c (масштаб), k (параметр формы), lmbd (параметр хвоста).
         Для x < 0 считается, что F(x)=0.
         """
         cdf = np.zeros_like(x)
         valid = x >= 0
-        cdf[valid] = 1 - (1 + (x[valid] / c) ** k) ** (-lam)
+        cdf[valid] = 1 - (1 + (x[valid] / lmbd) ** c) ** (-k)
         return cdf
     
     def error_function(params, x, ecdf_values):
-        c, k, lam = params
-        theoretical_cdf = burr_cdf(x, c, k, lam)
+        c, k, lmbd = params
+        theoretical_cdf = burr_cdf(x, c, k, lmbd)
         return np.sum((theoretical_cdf - ecdf_values) ** 2)
     
     # Начальные предположения: если доступны true_c, true_k, true_lam, использовать их, иначе задать 1.0
     # Estimate initial parameters using method of moments
-    mean = np.mean(df_intervals)
-    var = np.var(df_intervals)
-    skew = stats.skew(df_intervals)
+    mean = np.mean(df_intervals, axis=1)[0]
+    var = np.var(df_intervals, axis=1)[0]
+    skew = stats.skew(df_intervals, axis=1)[0]
+    # print('mean', mean[0])
+    # print('var', var[0])
+    # print('skew', skew[0])
     
     # Rough approximations for Burr XII parameters
     initial_k = max(1.0, abs(skew))  # k affects the shape/skewness
@@ -360,7 +363,7 @@ def bura_method_moments(df_intervals):
     
     return result.x
 
-def phreshe_method_moments(df_intervals):
+def phreshet_method_moments(df_intervals):
     sample_sorted = np.sort(df_intervals)
     ecdf = np.arange(1, len(sample_sorted) + 1) / len(sample_sorted)
     
