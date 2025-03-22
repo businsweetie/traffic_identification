@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
-from scipy.special import gammaincc, gamma
+from scipy.special import gammaincc, gamma, erfc
 from scipy.stats import expon, lognorm, uniform, weibull_min, ttest_ind, mannwhitneyu, kstest, f, pareto, invgamma
 
 def get_intervals_from_df(df):
@@ -80,6 +80,12 @@ def distribution_function_uniform(x, a, b):
 
 def distribution_function_weibull(x, theta, k):
     return weibull_min.cdf(x, k, loc=0, scale=theta)
+
+def distribution_function_levi(x, mu, c):
+    mask = x > mu
+    result = np.zeros_like(x, dtype=float)
+    result[mask] = erfc(np.sqrt(c / (2 * (x[mask] - mu))))
+    return result
 
 def distribution_function_phisher(x, dfn, dfd):
     return f.cdf(x, dfn, dfd)

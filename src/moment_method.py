@@ -228,8 +228,8 @@ def pareto_method_moments(df_intervals):
         return np.sum((theoretical_cdf - ecdf_values) ** 2)
     
     # Начальные предположения для параметров методом моментов
-    sample_mean = np.mean(df_intervals)
-    sample_min = np.min(df_intervals)
+    sample_mean = df_intervals.mean(axis=1)[0]
+    sample_min = df_intervals.min(axis=1)[0]
     
     b_init = 1 / (sample_mean / sample_min - 1)
     scale_init = sample_min
@@ -264,7 +264,7 @@ def inverse_gamma_method_moments(df_intervals):
     # Начальные предположения для параметров методом моментов:
     # Для обратного гамма распределения, математическое ожидание равно scale/(a-1) при a > 1.
     # Выберем a_init = 3.0, тогда scale_init = sample_mean * (a_init - 1)
-    sample_mean = np.mean(df_intervals)
+    sample_mean = df_intervals.mean(axis=1)[0]
     a_init = 3.0
     scale_init = sample_mean * (a_init - 1)
 
@@ -297,8 +297,8 @@ def lomax_method_moments(df_intervals):
         return np.sum((theoretical_cdf - ecdf_values) ** 2)
     
     # Начальные предположения для параметров: shape и scale
-    m_sample = np.mean(df_intervals)
-    v_sample = np.var(df_intervals)
+    m_sample = df_intervals.mean(axis=1)[0]
+    v_sample = df_intervals.var(axis=1)[0]
     # Если дисперсия меньше или равна квадрату среднего, используем запасное значение
     if v_sample <= m_sample**2:
         initial_guess = [0.7, 3]
@@ -315,7 +315,7 @@ def lomax_method_moments(df_intervals):
     )
     return result.x
 
-def bura_method_moments(df_intervals):
+def burr_method_moments(df_intervals):
     # Сортировка выборки и вычисление эмпирической ФРС
     sample_sorted = np.sort(df_intervals)
     ecdf = np.arange(1, len(sample_sorted) + 1) / len(sample_sorted)
@@ -338,12 +338,10 @@ def bura_method_moments(df_intervals):
     
     # Начальные предположения: если доступны true_c, true_k, true_lam, использовать их, иначе задать 1.0
     # Estimate initial parameters using method of moments
-    mean = np.mean(df_intervals, axis=1)[0]
-    var = np.var(df_intervals, axis=1)[0]
+    mean = df_intervals.mean(axis=1)[0]
+    var = df_intervals.var(axis=1)[0]
     skew = stats.skew(df_intervals, axis=1)[0]
-    # print('mean', mean[0])
-    # print('var', var[0])
-    # print('skew', skew[0])
+
     
     # Rough approximations for Burr XII parameters
     initial_k = max(1.0, abs(skew))  # k affects the shape/skewness
