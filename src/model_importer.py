@@ -1,7 +1,7 @@
 import os
 import logging
 # import tensorflow as tf
-# from xgboost import XGBRegressor
+from xgboost import XGBRegressor
 from log_control import LogController
 from catboost import CatBoostRegressor#, CatBoostClassifier
 
@@ -17,7 +17,7 @@ from catboost import CatBoostRegressor#, CatBoostClassifier
 
 # # # -------------------------------------------------------------------------------
 
-def load_models():
+def load_catboost_models():
     main_path = os.getcwd().replace(os.sep, '/')
     
     logger_controller = LogController()
@@ -43,6 +43,28 @@ def load_models():
     loaded_models = {}
     for name, path in models.items():
         model = CatBoostRegressor()
+        model.load_model(f"{main_path}/src/trained_models/{path}")
+        loaded_models[name] = model
+        log.info(f'{name} model added')
+
+    return loaded_models
+
+def load_xgb_models():
+    main_path = os.getcwd().replace(os.sep, '/')
+    
+    logger_controller = LogController()
+    logger_controller.initialize(main_path, 'output.log', logging.INFO)
+    log = logging.getLogger()
+
+    models = {
+        "mmpp_k2": "new_model/mmpp/model_xgb_k2_moments.json",
+        "mmpp_k3": "new_model/mmpp/model_xgb_k3_moments.json",
+        "mmpp_k4": "new_model/mmpp/model_xgb_k4_moments.json",
+    }
+
+    loaded_models = {}
+    for name, path in models.items():
+        model = XGBRegressor()
         model.load_model(f"{main_path}/src/trained_models/{path}")
         loaded_models[name] = model
         log.info(f'{name} model added')

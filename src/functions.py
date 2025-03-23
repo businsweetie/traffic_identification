@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 from scipy.special import gammaincc, gamma, erfc
 from scipy.stats import expon, lognorm, uniform, weibull_min, ttest_ind, mannwhitneyu, kstest, f, pareto, invgamma
+from report_builder import write_txt, write_matrix, clean_txt
+
 
 def get_intervals_from_df(df):
     """
@@ -242,7 +244,7 @@ def get_mmpp_param(y_pred, test_for_mmmp):
 
     pi = calculation_pi(q_matrix_for_solve, k_size)
 
-    lmbd_matrix = y_pred[0, 16:16 + k_size]
+    lmbd_matrix = y_pred[0, k_size**2:k_size**2 + k_size]
     return q_matrix, lmbd_matrix, pi
 
 def mmpp_test_param(X_pred, test_values, dict_out):
@@ -352,3 +354,44 @@ def hist_plot_test(data, file_name, bins_size=100, figsize=(10,3)):
             os.makedirs(save_path, exist_ok=True)
             
         fig.savefig(f'{save_path}/_bins_size_{bins_size}.pdf', bbox_inches="tight")
+
+
+def process_mmpp(file_name, df_for_mmmp, mmpp_regression_model, lmbd_emp, df_result, k_size):
+    out_dict_mmpp = {}
+    out_dict_mmpp[f'Количество состояний:'] = k_size
+    out_dict_mmpp['  '] = ' '
+    
+    df_for_mmmp['k_size'] = k_size
+    y_pred = mmpp_regression_model.predict(df_for_mmmp)
+    q_matrix, lmbd_matrix, pi = get_mmpp_param(y_pred, df_for_mmmp)
+    print('q_matrix', q_matrix)
+    print('lmbd_matrix', lmbd_matrix)
+    print('pi', pi)
+    
+    write_txt(file_name, 'mmpp', {"Матрица инфинитезимальных характеристик, Q": ' '})
+    write_matrix(file_name, 'mmpp', np.asmatrix(q_matrix))
+    out_dict_mmpp = {}
+    
+    write_txt(file_name, 'mmpp', {'  ': ' ', "Матрица условных интенсивностей, Lambda": ' '})
+    write_matrix(file_name, 'mmpp', np.asmatrix(lmbd_matrix))
+    out_dict_mmpp = {}
+    
+    X_pred = get_x_pred(df_for_mmmp, q_matrix, lmbd_matrix, pi)
+    X_pred = get_intervals_from_df(X_pred)
+    df_mmpp = get_cdf_from_intervals(X_pred)
+    
+    q_matrix[-1] = [1] * k_size
+    b = np.array([0] * (k_size - 1) + [1])
+    x = np.linalg.solve(q_matrix, b)
+    e = np.ones(k_size)
+    lmbd_theor = sum(x * lmbd_matrix @ e)
+    
+    out_dict_mmpp['  '] = ' '
+    out_dict_mmpp['Интенсивность эмпирическая:'] = "{:.3f}".format(lmbd_emp[0])
+    out_dict_mmpp['Интенсивность теоретическая:'] = "{:.3f}".format(lmbd_theor)
+    
+    x, cdf = ecdf_with_all_x(df_mmpp['emperical'], df_result['emperical'])
+    out_dict_mmpp = mmpp_test_param(df_mmpp['emperical'], df_result['emperical'], out_dict_mmpp)
+    
+    kolmogorov_plot(x, cdf, file_name, f"mmpp_{k_size}", mmpp_mode=True)
+    write_txt(file_name, 'mmpp', out_dict_mmpp)
