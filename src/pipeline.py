@@ -15,7 +15,7 @@ def start():
     catboost_models = load_catboost_models()
     xgb_models = load_xgb_models()
 
-    file_name = 'test'
+    file_name = 'tls12_dst'
     
     df_moments = pd.read_csv(main_path + "/" + file_name + '.csv', sep=';', header=None)
     df_for_mmmp = df_moments.iloc[:, :10000]
@@ -24,7 +24,7 @@ def start():
 
     lmbd_emp = df_intervals.shape[1] / np.sum(df_intervals, axis=1)
     df_result = get_cdf_from_intervals(df_intervals)
-    hist_plot_test(df_intervals.iloc[0].tolist(), file_name, 100)
+    hist_plot_test(df_intervals.iloc[0].tolist(), file_name, 50)
     
     #----------------------------------------------------------------------------------------------------------------------------------
     
@@ -258,6 +258,7 @@ def start():
         out_dict_recurr["Интенсивность эмпирическая:"] = "{:.3f}".format(lmbd_emp[0])
         out_dict_recurr['Интенсивность теоретическая:'] = "{:.3f}".format(1 / (math.exp(model_param[0][0] + pow(model_param[0][1], 2) / 2)))
         theor_cdf = [distribution_function_lognorm(df_result['emperical'][i], model_param[0][0], model_param[0][1]) for i in range(len(df_result['emperical']))]
+        out_dict_recurr['    '] = ' '
         out_dict_recurr['Расстояние Колмогорова:'] = "{:.3f}".format(kolmogorov(df_result['cdf_emp'], theor_cdf))
     else:
         out_dict_recurr['Значение параметров некорректно'] = ' '
@@ -287,6 +288,7 @@ def start():
         out_dict_recurr["Интенсивность эмпирическая:"] = "{:.3f}".format(lmbd_emp[0])
         out_dict_recurr['Интенсивность теоретическая:'] = "{:.3f}".format(1 / ((model_param[0][0] + model_param[0][1]) / 2))
         theor_cdf = [distribution_function_uniform(df_result['emperical'][i], model_param[0][0], model_param[0][1]) for i in range(len(df_result['emperical']))]
+        out_dict_recurr['    '] = ' '
         out_dict_recurr['Расстояние Колмогорова:'] = "{:.3f}".format(kolmogorov(df_result['cdf_emp'], theor_cdf))
     else:
         out_dict_recurr['Значение параметров некорректно'] = ' '
@@ -316,6 +318,7 @@ def start():
         out_dict_recurr["Интенсивность эмпирическая:"] = "{:.3f}".format(lmbd_emp[0])
         out_dict_recurr['Интенсивность теоретическая:'] = "{:.3f}".format(1 / (model_param[0][0] * gamma(1 + 1 / model_param[0][1])))
         theor_cdf = [distribution_function_weibull(df_result['emperical'][i], model_param[0][0], model_param[0][1]) for i in range(len(df_result['emperical']))]
+        out_dict_recurr['    '] = ' '
         out_dict_recurr['Расстояние Колмогорова:'] = "{:.3f}".format(kolmogorov(df_result['cdf_emp'], theor_cdf))
     else:
         out_dict_recurr['Значение параметров некорректно'] = ' '
@@ -345,6 +348,7 @@ def start():
         out_dict_recurr["Интенсивность эмпирическая:"] = "{:.3f}".format(lmbd_emp[0])
         out_dict_recurr['Интенсивность теоретическая:'] = '-'
         theor_cdf = [distribution_function_levi(df_result['emperical'][i], model_param[0][0], model_param[0][1]) for i in range(len(df_result['emperical']))]
+        out_dict_recurr['    '] = ' '
         out_dict_recurr['Расстояние Колмогорова:'] = "{:.3f}".format(kolmogorov(df_result['cdf_emp'], theor_cdf))
     else:
         out_dict_recurr['Значение параметров некорректно'] = ' '
@@ -377,6 +381,7 @@ def start():
         else:
             out_dict_recurr['Интенсивность теоретическая:'] = '-'
         theor_cdf = [distribution_function_phisher(df_result['emperical'][i], model_param[0][0], model_param[0][1]) for i in range(len(df_result['emperical']))]
+        out_dict_recurr['    '] = ' '
         out_dict_recurr['Расстояние Колмогорова:'] = "{:.3f}".format(kolmogorov(df_result['cdf_emp'], theor_cdf))
     else:
         out_dict_recurr['Значение параметров некорректно'] = ' '
@@ -408,6 +413,7 @@ def start():
         else:
             out_dict_recurr['Интенсивность теоретическая:'] = '-'
         theor_cdf = [distribution_function_pareto(df_result['emperical'][i], model_param[0][0], model_param[0][1]) for i in range(len(df_result['emperical']))]
+        out_dict_recurr['    '] = ' '
         out_dict_recurr['Расстояние Колмогорова:'] = "{:.3f}".format(kolmogorov(df_result['cdf_emp'], theor_cdf))
     else:
         out_dict_recurr['Значение параметров некорректно'] = ' '
@@ -440,6 +446,7 @@ def start():
         else:
             out_dict_recurr['Интенсивность теоретическая:'] = '-'
         theor_cdf = [distribution_function_invgamma(df_result['emperical'][i], model_param[0][0], model_param[0][1]) for i in range(len(df_result['emperical']))]
+        out_dict_recurr['    '] = ' '
         out_dict_recurr['Расстояние Колмогорова:'] = "{:.3f}".format(kolmogorov(df_result['cdf_emp'], theor_cdf))
     else:
         out_dict_recurr['Значение параметров некорректно'] = ' '
@@ -472,6 +479,7 @@ def start():
         else:
             out_dict_recurr['Интенсивность теоретическая:'] = '-'
         theor_cdf = [distribution_function_lomax(df_result['emperical'][i], model_param[0][1], model_param[0][0]) for i in range(len(df_result['emperical']))]
+        out_dict_recurr['    '] = ' '
         out_dict_recurr['Расстояние Колмогорова:'] = "{:.3f}".format(kolmogorov(df_result['cdf_emp'], theor_cdf))
     else:
         out_dict_recurr['Значение параметров некорректно'] = ' '
@@ -503,6 +511,7 @@ def start():
         out_dict_recurr["Интенсивность эмпирическая:"] = "{:.3f}".format(lmbd_emp[0])
         out_dict_recurr['Интенсивность теоретическая:'] = "{:.3f}".format(1 / (model_param[0][1] * beta_func((model_param[0][1]-1)/model_param[0][0], 1+(1/model_param[0][0]))))
         theor_cdf = [distribution_function_burr(df_result['emperical'][i], model_param[0][0], model_param[0][1], model_param[0][2]) for i in range(len(df_result['emperical']))]
+        out_dict_recurr['    '] = ' '
         out_dict_recurr['Расстояние Колмогорова:'] = "{:.3f}".format(kolmogorov(df_result['cdf_emp'], theor_cdf))
     else:
         out_dict_recurr['Значение параметров некорректно'] = ' '
@@ -537,6 +546,7 @@ def start():
         else:
             out_dict_recurr['Интенсивность теоретическая:'] = '-'
         theor_cdf = [distribution_function_phrechet(df_result['emperical'][i], model_param[0][0], model_param[0][1], model_param[0][2]) for i in range(len(df_result['emperical']))]
+        out_dict_recurr['    '] = ' '
         out_dict_recurr['Расстояние Колмогорова:'] = "{:.3f}".format(kolmogorov(df_result['cdf_emp'], theor_cdf))
     else:
         out_dict_recurr['Значение параметров некорректно'] = ' '
