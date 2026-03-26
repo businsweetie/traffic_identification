@@ -15,10 +15,11 @@ def start():
     catboost_models = load_catboost_models()
     xgb_models = load_xgb_models()
 
-    file_name = 'tls12_dst'
+    file_name = 'all_intervals_k4'
     
     df_moments = pd.read_csv(main_path + "/" + file_name + '.csv', sep=';', header=None)
-    df_for_mmmp = df_moments.iloc[:, :10000]
+    df_for_mmmp = df_moments.iloc[:1, :10000]
+    print(df_for_mmmp)
     df_intervals = get_intervals_from_df(df_moments)
     df_stat = calculate_statistics(df_intervals)
 
