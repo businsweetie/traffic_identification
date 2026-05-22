@@ -39,8 +39,7 @@ $$
 Оценка параметра методом максимального правдоподобия совпадает с оценкой методом моментов:
 
 $$
-\hat{\lambda}_{MLE}=\hat{\lambda}_{MM}=\frac{1}{\bar{\tau}}
-=\frac{n}{\sum_{i=1}^n \tau_i}.
+\hat{\lambda}_{MLE}=\hat{\lambda}_{MM}=\frac{1}{\bar{\tau}}=\frac{n}{\sum_{i=1}^n \tau_i}.
 $$
 
 Относительная ошибка рассчитывается как:
@@ -52,18 +51,7 @@ $$
 Для критерия Андерсона–Дарлинга минимизируется статистика:
 
 $$
-A^2(\lambda)
-=
--n
--
-\frac{1}{n}
-\sum_{i=1}^n
-(2i-1)
-\left[
-\ln F(\tau_{(i)};\lambda)
-+
-\ln\left(1-F(\tau_{(n+1-i)};\lambda)\right)
-\right].
+A^2(\lambda)=-n-\frac{1}{n}\sum_{i=1}^n(2i-1)\left[\ln F(\tau_{(i)};\lambda)+\ln\left(1-F(\tau_{(n+1-i)};\lambda)\right)\right].
 $$
 
 ---
