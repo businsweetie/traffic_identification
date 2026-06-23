@@ -6,9 +6,7 @@
 
 1. **Обучение на логарифме параметра:**
 
-\[
-y = \log(\lambda), \qquad \hat{\lambda}=\exp(\hat{y}).
-\]
+$$ y = \log(\lambda), \qquad \hat{\lambda}=\exp(\hat{y}).$$
 
 2. **Прямое обучение на параметре:**
 
